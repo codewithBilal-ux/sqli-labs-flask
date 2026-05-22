@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Lab 07 — Second-Order SQLi{% endblock %}
+{% block content %}
+
+<div class="breadcrumb">
+  <a href="/">Home</a><span>›</span>
+  <span style="color:#e6edf3;">Lab 07 — Second-Order SQLi</span>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div style="width:36px;height:36px;background:#1a0808;border:1px solid #e63946;border-radius:4px;
+                display:flex;align-items:center;justify-content:center;
+                font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#e63946;flex-shrink:0;">07</div>
+    <div>
+      <h2>{{ lab.title }}</h2>
+      <div style="font-size:11px;color:#8b949e;margin-top:2px;">{{ lab.description }}</div>
+    </div>
+  </div>
+  <div class="lab-meta">
+    <span class="tag tag-red">⚠ Vulnerable (Step 2 only)</span>
+    <span class="tag tag-yellow">POST · /lab7</span>
+    <span class="tag tag-green">Goal: {{ lab.goal }}</span>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+
+  <!-- Step 1: Store -->
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#58a6ff;margin-bottom:1rem;">
+      Step 1 — Store a Comment <span style="font-size:10px;color:#8b949e;font-weight:400;">(parameterized INSERT — looks safe)</span>
+    </div>
+    {% if store_msg %}<div class="banner banner-info">{{ store_msg }}</div>{% endif %}
+    <form method="POST">
+      <input type="hidden" name="action" value="store">
+      <div class="form-row">
+        <label>Username (inject here!)</label>
+        <input type="text" name="username" placeholder="e.g. admin'--" value="">
+      </div>
+      <div class="form-row">
+        <label>Comment</label>
+        <input type="text" name="comment" placeholder="Any comment text" value="">
+      </div>
+      <button type="submit" class="btn btn-green">Store Comment →</button>
+    </form>
+    {% if raw_sql_store %}
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">INSERT used (parameterized)</div>
+      <div class="sql-box safe">{{ raw_sql_store }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Step 2: Trigger -->
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e63946;margin-bottom:1rem;">
+      Step 2 — Trigger Lookup <span style="font-size:10px;color:#8b949e;font-weight:400;">(RAW query — vulnerable!)</span>
+    </div>
+    {% if trigger_msg %}<div class="banner banner-info">{{ trigger_msg }}</div>{% endif %}
+    <form method="POST">
+      <input type="hidden" name="action" value="trigger">
+      <div class="form-row">
+        <label>Comment ID to look up</label>
+        <input type="text" name="comment_id" placeholder="1" value="">
+      </div>
+      <button type="submit" class="btn btn-red">Trigger Lookup →</button>
+    </form>
+    {% if raw_sql_trigger %}
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Generated SQL (vulnerable!)</div>
+      <div class="sql-box">{{ raw_sql_trigger }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Stored Comments -->
+<div class="card">
+  <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">💾 Stored Comments (Database)</div>
+  {% if stored_comments %}
+  <table class="results-table">
+    <thead><tr><th>ID</th><th>Username (stored payload)</th><th>Comment</th></tr></thead>
+    <tbody>
+      {% for row in stored_comments %}
+      <tr><td>{{ row['id'] }}</td><td style="color:#f7c948;">{{ row['username'] }}</td><td>{{ row['comment'] }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="color:#8b949e;font-size:12px;">No comments stored yet.</div>
+  {% endif %}
+</div>
+
+{% if trigger_result %}
+<div class="card">
+  <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e63946;margin-bottom:1rem;">🎯 Trigger Query Results</div>
+  <table class="results-table">
+    <thead><tr>{% for col in trigger_result[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in trigger_result %}
+      <tr class="highlight-row">{% for val in row %}<td>{{ row[val] }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Hint card -->
+<div class="card">
+  <details>
+    <summary>▶ How does second-order injection work?</summary>
+    <div class="hint-body" style="margin-top:.75rem;">
+      {{ lab.hint }}<br><br>
+      <strong>Attack steps:</strong><br>
+      1. Store username: <code style="color:#b48ef7;">admin'--</code><br>
+      2. Click "Trigger Lookup" for that comment's ID<br>
+      3. The stored payload is retrieved and injected into: <code style="color:#b48ef7;">SELECT * FROM users WHERE username = 'admin'--'</code><br>
+      4. The -- comments out the trailing quote, the query returns the admin row.<br><br>
+      <strong>Safe fix:</strong> {{ lab.safe_version }}
+    </div>
+  </details>
+</div>
+
+{% endblock %}

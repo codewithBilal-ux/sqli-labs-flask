@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Lab {{ lab.number }} — {{ lab.title }}{% endblock %}
+{% block content %}
+
+<div class="breadcrumb">
+  <a href="/">Home</a><span>›</span>
+  <span style="color:#e6edf3;">Lab {{ lab.number }} — {{ lab.title }}</span>
+</div>
+
+<!-- Header -->
+<div class="card">
+  <div class="card-header">
+    <div style="width:36px;height:36px;background:#1a0808;border:1px solid #e63946;border-radius:4px;
+                display:flex;align-items:center;justify-content:center;
+                font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#e63946;flex-shrink:0;">
+      {{ '%02d'|format(lab.number) }}
+    </div>
+    <div>
+      <h2>{{ lab.title }}</h2>
+      <div style="font-size:11px;color:#8b949e;margin-top:2px;">{{ lab.description }}</div>
+    </div>
+  </div>
+  <div class="lab-meta">
+    <span class="tag tag-red">⚠ Vulnerable</span>
+    <span class="tag tag-blue">GET · ?{{ lab.param }}</span>
+    <span class="tag tag-green">Goal: {{ lab.goal }}</span>
+  </div>
+</div>
+
+<!-- Two-column: Input + Payload -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+
+  <!-- Input Form -->
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">
+      🔍 Query Parameter
+    </div>
+    <form method="GET">
+      <div class="form-row">
+        <label>{{ lab.param }}</label>
+        <input type="text" name="{{ lab.param }}" value="{{ input_val }}" placeholder="e.g. Electronics">
+      </div>
+      <button type="submit" class="btn btn-red">Execute Query →</button>
+    </form>
+    {% if raw_sql %}
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Generated SQL</div>
+      <div class="sql-box">{{ raw_sql }}</div>
+    </div>
+    {% endif %}
+    {% if error %}
+    <div class="sql-box error-box" style="margin-top:.5rem;">ERROR: {{ error }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Payload & Hints -->
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">
+      💉 Attack Payload
+    </div>
+    <div class="payload-block">
+      <div style="font-size:10px;color:#8b949e;margin-bottom:.3rem;text-transform:uppercase;">Inject as {{ lab.param }}:</div>
+      <code>{{ lab.payload }}</code>
+    </div>
+    <details style="margin-top:.75rem;">
+      <summary>▶ Show hint</summary>
+      <div class="hint-body">{{ lab.hint }}</div>
+    </details>
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">✅ Safe Parameterized Version</div>
+      <div class="sql-box safe">{{ lab.safe_version }}</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Results -->
+{% if results %}
+<div class="card">
+  <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">
+    📊 Query Results
+    <span style="font-size:11px;color:#8b949e;font-weight:400;margin-left:.5rem;">{{ results|length }} row(s) returned</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="results-table">
+      <thead>
+        <tr>{% for col in results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in results %}
+        <tr {% if row['name'] and ('SECRET' in row['name']|upper or 'HIDDEN' in row['name']|upper) %}class="highlight-row"{% endif %}>
+          {% for val in row %}<td>{{ row[val] }}</td>{% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% elif input_val %}
+<div class="banner banner-fail">No results returned for that input.</div>
+{% endif %}
+
+{% endblock %}

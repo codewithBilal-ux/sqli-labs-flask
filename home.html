@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}SQLi Labs — Home{% endblock %}
+{% block content %}
+
+<div style="text-align:center; padding: 3rem 0 2rem;">
+  <div style="font-family:'Syne',sans-serif; font-size:3rem; font-weight:800; color:#e6edf3; letter-spacing:-0.03em; line-height:1.1;">
+    SQL Injection <span style="color:#e63946;">Lab</span>
+  </div>
+  <p style="color:#8b949e; margin-top:.75rem; font-size:13px; max-width:520px; margin-left:auto; margin-right:auto;">
+    8 intentionally vulnerable routes covering the core SQLi attack classes. Study each vulnerability, understand the SQL it generates, and practice the fix.
+  </p>
+  <div style="display:flex; gap:.75rem; justify-content:center; margin-top:1.25rem; flex-wrap:wrap;">
+    <span class="tag tag-red">⚠ For Educational Use Only</span>
+    <span class="tag tag-green">SQLite Backend</span>
+    <span class="tag tag-blue">Flask / Python</span>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap:1rem; margin-top:1rem;">
+{% for lab in labs %}
+<a href="/lab{{ lab.n }}" style="text-decoration:none;">
+  <div class="card" style="cursor:pointer; transition: border-color .2s, transform .15s;"
+       onmouseover="this.style.borderColor='#e63946'; this.style.transform='translateY(-2px)'"
+       onmouseout="this.style.borderColor='#1e2330'; this.style.transform=''">
+    <div class="card-header">
+      <div style="width:32px; height:32px; background:#1a0808; border:1px solid #e63946; border-radius:4px;
+                  display:flex; align-items:center; justify-content:center;
+                  font-family:'Syne',sans-serif; font-weight:800; font-size:14px; color:#e63946; flex-shrink:0;">
+        {{ '%02d'|format(lab.n) }}
+      </div>
+      <div>
+        <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; color:#e6edf3;">{{ lab.title }}</div>
+        <div style="font-size:11px; color:#8b949e; margin-top:2px;">{{ lab.desc }}</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.5rem;">
+      <span class="tag {% if lab.method == 'GET' %}tag-blue{% else %}tag-yellow{% endif %}">{{ lab.method }}</span>
+    </div>
+  </div>
+</a>
+{% endfor %}
+</div>
+
+<div class="card" style="margin-top:2rem; border-color:#1a2a1a;">
+  <div style="font-family:'Syne',sans-serif; font-weight:700; color:#39d353; margin-bottom:1rem;">📋 Database Schema</div>
+  <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem;">
+    {% for tbl in [
+      ('products',     ['id','name','description','category','price','released']),
+      ('users',        ['id','username','password','email','role']),
+      ('secret_users', ['id','username','secret_key','clearance_level']),
+      ('comments',     ['id','username','comment']),
+    ] %}
+    <div style="background:#070910; border:1px solid #1e2330; border-radius:4px; padding:.9rem 1rem;">
+      <div style="color:#39d353; font-weight:700; margin-bottom:.5rem; font-size:12px;">{{ tbl[0] }}</div>
+      {% for col in tbl[1] %}
+      <div style="font-size:11px; color:#8b949e; padding:1px 0;">— {{ col }}</div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

